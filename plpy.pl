@@ -1,9 +1,7 @@
 #!/usr/bin/perl -w
 
-# written by andrewt@cse.unsw.edu.au September 2016
-# as a starting point for COMP2041/9041 assignment 
-# http://cgi.cse.unsw.edu.au/~cs2041/assignments/plpy/
-# Replace this comment with your own header comment
+# Written by William Fan, z5059967@ad.unsw.edu.au September 2016
+
 
 while ($line = <>) {
     if ($line =~ /^#!/ && $. == 1) {
