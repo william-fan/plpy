@@ -24,9 +24,11 @@ while ($line = <F>) {
 		push @final, $line;
 	}
 }
+
 foreach $arg (@final){
 	print "$arg\n";
 }
+
 sub header {	# translate #! line 
 	if ($_[0] =~ m/^#!/ && $. == 1) {
 		$_[0] = "#!/usr/local/bin/python3.5 -u"
@@ -42,13 +44,13 @@ sub comments {	# Blank & comment lines can be passed unchanged
 
 sub printing {   				# Python's print adds a new-line character by default so we need to delete it from the Perl print statement   		 
 	if ($_[0] =~ /^\s*print\s*"(\$.*)\\n"[\s;]*$/){		#remove quotes when print variables
-		$_[0] = "print($1)";
+		$_[0] =~ s/print\s*"(\$.*)\\n"[\s;]*$/print($1)/;
 	}
-	elsif ($_[0] =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {
-		$_[0] = "print(\"$1\")";			 
+	elsif ($_[0] =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {	#printing without variables
+		$_[0] =~ s/print\s*"(.*)\\n"[\s;]*$/print(\"$1\")/;			 
 	}
 	elsif ($_[0] =~ /^\s*print\s*(.*),\s*"\\n";*$/) {	#when printing without quotes
-		$_[0] = "print($1)";
+		$_[0] =~ s/print\s*(.*),\s*"\\n";*$/print($1)/;
 	}
 	return $_[0];
 }
