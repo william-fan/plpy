@@ -6,7 +6,7 @@
 @final = ();
 @imports = ();
 
-if (scalar @ARGV == 0){
+if (scalar @ARGV == 0) {
 	open(F,"-");
 } else {
 	open (F, "<", "$ARGV[0]") or die "$0: can't open $ARGV[0]: $!\n";
@@ -32,7 +32,7 @@ while ($line = <F>) {
 
 unshift @final, @imports;
 
-foreach $arg (@final){
+foreach $arg (@final) {
 	print "$arg\n";
 }
 
@@ -68,7 +68,7 @@ sub comments {	# Blank & comment lines can be passed unchanged
 }
 
 sub printing {   				# Python's print adds a new-line character by default so we need to delete it from the Perl print statement   		 
-	if ($_[0] =~ /^\s*print\s*"(\$.*)\\n"[\s;]*$/){		#remove quotes when print variables
+	if ($_[0] =~ /^\s*print\s*"(\$.*)\\n"[\s;]*$/) {		#remove quotes when print variables
 		$_[0] =~ s/print\s*"(\$.*)\\n"[\s;]*$/print($1)/;
 	}
 	elsif ($_[0] =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {	#printing without variables
@@ -81,34 +81,34 @@ sub printing {   				# Python's print adds a new-line character by default so we
 }
 
 sub variables {
-	if ($_[0] =~ /\$(.*)/){
+	if ($_[0] =~ /\$(.*)/) {
 		$_[0] =~ s/\$//g;
 	}
 	return $_[0];
 }
 
 sub skips {
-	if ($_[0] =~ /last;$/){
+	if ($_[0] =~ /last;$/) {
 		$_[0] =~ s/last;$/break/;
 	}
 	return $_[0];
 }
 
 sub semicolons {
-	if ($_[0] =~ /.*;$/){	#converts all $ right now
+	if ($_[0] =~ /.*;$/) {	#converts all $ right now
 		$_[0] =~ s/;$//;
 	}
 	return $_[0];
 }
 
 sub braces {	#replaces braces with colons
-	if ($_[0] =~ /\((.*) eq (.*)\)\s*{$/){
+	if ($_[0] =~ /\((.*) eq (.*)\)\s*{$/) {
 		$_[0] =~ s/\((.*) eq (.*)\)\s*{$/$1 == $2:/;
 	}
-	elsif ($_[0] =~ /\((.*)\)\s*{$/){
+	elsif ($_[0] =~ /\((.*)\)\s*{$/) {
 		$_[0] =~ s/\((.*)\)\s*{$/$1:/;	#replaces parentheses in conditionals #maybe replace for advanced 
 	} 
-	if 	($_[0] =~ /}$/){
+	if 	($_[0] =~ /}$/) {
 		$_[0] =~ s/}$//;
 	}
 	return $_[0];
