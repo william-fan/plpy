@@ -17,6 +17,9 @@ while ($line = <F>) {
 	$line = header($line);
 	$line = strip($line);
 	$line = stdin($line);
+	$line = exits($line);
+	$line = forloops($line);
+	$line = ifelse($line);
 	$line = comments($line);
 	$line = printing($line);
 	$line = variables($line);
@@ -24,13 +27,13 @@ while ($line = <F>) {
 	$line = semicolons($line);
 	$line = braces($line);
 	#$line = unknown($line);
-	if ($line ne ""){
+	if ($line ne 0){	#delete line if zero
 		push @final, $line;
 	}
 	
 }
 
-unshift @final, @imports;
+unshift @final, @imports;	#add import statements
 
 foreach $arg (@final) {
 	print "$arg\n";
@@ -39,7 +42,7 @@ foreach $arg (@final) {
 sub header {	# translate #! line 
 	if ($_[0] =~ m/^#!/ && $. == 1) {
 		push @imports, "#!/usr/local/bin/python3.5 -u";
-		$_[0] = "";
+		$_[0] = 0;
 	}
 	return $_[0];
 }
@@ -57,7 +60,37 @@ sub stdin {
 		$_[0] =~ s/<STDIN>/sys.stdin.readline()/;
 		imports("import sys");
 	}
+	return $_[0];
+}
 
+sub exits {
+	if ($_[0] =~ /exit [^\s]+[\s;]+/) {
+		$_[0] =~ s/exit (.*)[\s;]+/sys.exit($1)/;		#captures all words after exit right now
+		imports("import sys");
+	}
+	return $_[0];
+}
+
+sub forloops {
+	if ($_[0] =~ /for ((.*);(.*);(.*))\s*{$/) {
+		$_[0] =~ s/for ((.*);(.*);(.*))\s*{$/for $1/;		#TODO
+	}
+	return $_[0];
+}
+
+sub ifelse {
+	if ($_[0] =~ /}\s*elsif/) {
+		$_[0] =~ s/}\s*elsif/elif/;		
+	}
+	elsif ($_[0] =~ /elsif/) {
+	
+	}
+	if ($_[0] =~ /}\s*else\s*{/) {
+		$_[0] =~ s/}\s*else\s*{/else:/;		
+	}
+	elsif ($_[0] =~ /else\s*{/) {
+		$_[0] =~ s/else\s*{/else:/;	
+	}
 	return $_[0];
 }
 
@@ -81,7 +114,7 @@ sub printing {   				# Python's print adds a new-line character by default so we
 }
 
 sub variables {
-	if ($_[0] =~ /\$(.*)/) {
+	if ($_[0] =~ /\$(.*)/) {	#converts all $ right now
 		$_[0] =~ s/\$//g;
 	}
 	return $_[0];
@@ -95,7 +128,7 @@ sub skips {
 }
 
 sub semicolons {
-	if ($_[0] =~ /.*;$/) {	#converts all $ right now
+	if ($_[0] =~ /.*;$/) {	
 		$_[0] =~ s/;$//;
 	}
 	return $_[0];
@@ -105,11 +138,14 @@ sub braces {	#replaces braces with colons
 	if ($_[0] =~ /\((.*) eq (.*)\)\s*{$/) {
 		$_[0] =~ s/\((.*) eq (.*)\)\s*{$/$1 == $2:/;
 	}
+	elsif ($_[0] =~ /\((.*) ne (.*)\)\s*{$/) {
+		$_[0] =~ s/\((.*) ne (.*)\)\s*{$/$1 != $2:/;
+	}
 	elsif ($_[0] =~ /\((.*)\)\s*{$/) {
 		$_[0] =~ s/\((.*)\)\s*{$/$1:/;	#replaces parentheses in conditionals #maybe replace for advanced 
 	} 
 	if 	($_[0] =~ /}$/) {
-		$_[0] =~ s/}$//;
+		$_[0] = 0;
 	}
 	return $_[0];
 }
