@@ -17,6 +17,8 @@ while ($line = <F>) {
 	$line = header($line);
 	$line = strip($line);
 	$line = stdin($line);
+	$line = arguments($line);
+	$line = joins($line);
 	$line = exits($line);
 	$line = forloops($line);
 	$line = ifelse($line);
@@ -56,8 +58,24 @@ sub strip {
 }
 
 sub stdin {
+	if ($_[0] =~ /\@ARGV/) {
+		$_[0] =~ s/\@ARGV/sys.argv[1:]/;
+		imports("import sys");
+	}
+	return $_[0];
+}
+
+sub arguments {
 	if ($_[0] =~ /<STDIN>/) {
 		$_[0] =~ s/<STDIN>/sys.stdin.readline()/;
+		imports("import sys");
+	}
+	return $_[0];
+}
+
+sub joins {
+	if ($_[0] =~ /join\((.*)\,\s*(.*)\)/) {
+		$_[0] =~ s/join\((.*),\s*(.*)\)/$1.join\($2\)/;
 		imports("import sys");
 	}
 	return $_[0];
@@ -72,10 +90,13 @@ sub exits {
 }
 
 sub forloops {
-	if ($_[0] =~ /for ((.*);(.*);(.*))\s*{$/) {
-		$_[0] =~ s/for ((.*);(.*);(.*))\s*{$/for $1/;		#TODO
+	if ($_[0] =~ /for \((.*);\s*(.*);\s*(.*)\)\s*{$/) {
+		$_[0] =~ s/for \((.*);\s*(.*);\s*(.*)\)\s*{$/for $1 in $2:/;		#TODO 
+	} 
+	elsif ($_[0] =~ /foreach \$(.*) \((.*)\)\s*{$/) {
+		$_[0] =~ s/foreach \$(.*) \((.*)\)\s*{$/for $1 in $2:/;
 	}
-	return $_[0];
+	return $_[0];					#need range number
 }
 
 sub ifelse {
@@ -83,7 +104,7 @@ sub ifelse {
 		$_[0] =~ s/}\s*elsif/elif/;		
 	}
 	elsif ($_[0] =~ /elsif/) {
-	
+		$_[0] =~ s/elsif/elif/;	
 	}
 	if ($_[0] =~ /}\s*else\s*{/) {
 		$_[0] =~ s/}\s*else\s*{/else:/;		
@@ -144,7 +165,7 @@ sub braces {	#replaces braces with colons
 	elsif ($_[0] =~ /\((.*)\)\s*{$/) {
 		$_[0] =~ s/\((.*)\)\s*{$/$1:/;	#replaces parentheses in conditionals #maybe replace for advanced 
 	} 
-	if 	($_[0] =~ /}$/) {
+	if 	($_[0] =~ /}\s*$/) {
 		$_[0] = 0;
 	}
 	return $_[0];
