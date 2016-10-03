@@ -1,2 +1,4 @@
 #!/usr/bin/perl -w
-# put your demo script here
+for ($count =0; $count < 4; $count++){
+	print "$count\n";
+}
