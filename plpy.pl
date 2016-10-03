@@ -186,7 +186,10 @@ sub arrayElements {
 	if ($_[0] =~ /shift\s*@([^\s;]+);*/) {
 		$_[0] =~ s/shift\s+@([^\s;]+);*/$1.pop(0)/;
 	}
-	if ($_[0] =~ /reverse\s*@([^\s;]+);*/) {
+    if ($_[0] =~ /(.*)\s*=\s*reverse\s*@([^\s;]+);*/) {
+        $_[0] =~ s/(.*)\s*=\s*reverse\s*@([^\s;]+);*/$2.reverse()/;
+    }
+	elsif ($_[0] =~ /reverse\s*@([^\s;]+);*/) {
 		$_[0] =~ s/reverse\s*@([^\s;]+);*/$1.reverse()/;
 	}
 	return $_[0];

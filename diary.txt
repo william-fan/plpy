@@ -1,6 +1,50 @@
 COMP2041 Assignment 1
 Diary - William Fan - z5059967
 
-05/09/15	18:00	18:15
-Activity: 
-Comments: 
+19/09/16    18:30   19:30
+Activity: Coding
+Comments: Created first commit, changed the starting code to better fit the first tests.
+
+21/09/16    19:00   21:00
+Activity: Coding
+Comments: Laid out style for the rest of the assignment, using functions for neatness and readability. Added a argv check.
+
+24/09/16    20:00   20:15
+Activity: Debugging
+Comments: Fixed function layout, and added output printing.
+
+24/09/16    20:15   21:30
+Activity: Coding
+Comments: Added printing options, print the header, remove semicolons and remove ending braces. Passes simple tests.
+
+25/09/16    15:30   17:00
+Activity: Debugging
+Comments: Fixed printing by making it more robust, handle spaces better.
+
+28/09/16    19:00   22:00
+Activity: Coding
+Comments: Added import statements and import checks, handle more braces and conditionals such as eq, add skips such as last, add <STDIN> 
+          and chomp.
+
+29/09/16    18:30   20:30
+Activity: Coding
+Comments: Add exits, certain for loops, certain if else statements, add ne, and better handle deleting lines.
+
+1/10/16     18:00   20:30
+Activity: Coding
+Comments: Add join, @ARGV, add more types of for loops, and if else statements. Added for loops with .. style. Passes autotest.
+
+2/10/16     18:00   20:17
+Activity: Debugging/Coding
+Comments: Fixed import statements so they are on one line, added specific special loops, added more join statements, added regex, added foreach
+          loops, added ++ -- operators.
+          
+3/10/16     14:00   20:00
+Activity: Debugging/Coding
+Comments: Added defining for hash tables, fixed better handling of certain spaces, added string concatenation, added regex matching, fixed regex
+          substitution, added array operations such as push, pop, shift, unshift, reverse, added array and hash table creation, added some print
+          variable substitution, add function to check if declarations already exist, add split, fixed some mismatched import statements.
+          
+3/10/16     19:00   20:00
+Activity: Finalising
+          Add more comments within the code, finish test/demo code. Made long regex more readable.
