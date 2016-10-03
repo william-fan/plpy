@@ -5,6 +5,7 @@
 
 @final = ();
 @imports = ();
+@declare = ();
 
 if (scalar @ARGV == 0) {
 	open(F,"-");
@@ -17,13 +18,17 @@ while ($line = <F>) {
 	$line = header($line);
 	$line = strip($line);
 	$line = stdin($line);
-	$line = specialloops($line);
+	$line = specialLoops($line);
 	$line = arguments($line);
+	$line = strings($line);
 	$line = joins($line);
 	$line = exits($line);
 	$line = regex($line);
-	$line = forloops($line);
-	$line = ifelse($line);
+	$line = arrayElements($line);
+	$line = arrays($line);
+	$line = hashTables($line);
+	$line = forLoops($line);
+	$line = ifElse($line);
 	$line = comments($line);
 	$line = printing($line);
 	$line = operator($line);
@@ -37,6 +42,8 @@ while ($line = <F>) {
 	}
 	
 }
+
+unshift	@final, @declare;
 
 if (@imports) {
 	$importstring = "import";
@@ -81,25 +88,39 @@ sub stdin {
 	return $_[0];
 }
 
-sub specialloops {
+sub specialLoops {
 	if ($_[0] =~ /while\s*\((.*)\s*=\s*<>\)\s*{$/) {
-		$_[0] =~ s/while\s*\((.*)\s*=\s*<>\)\s*{$/for $1 in fileinput.input\(\):/;	
+		$_[0] =~ s/while\s*\(([^\s*]+)\s*=\s*<>\)\s*{$/for $1 in fileinput.input\(\):/;	
 		imports("fileinput");
 	}
 	elsif ($_[0] =~ /while\s*\((.*)\s*=\s*<STDIN>\)\s*{$/) {
-		$_[0] =~ s/while\s*\((.*)\s*=\s*<STDIN>\)\s*{$/for $1 in sys.stdin\(\):/;	#add extra space
+		$_[0] =~ s/while\s*\(([^\s*]+)\s*=\s*<STDIN>\)\s*{$/for $1 in sys.stdin\(\):/;	
 		imports("fileinput");
 	}
 	return $_[0];
 }
 
 sub arguments {
-	if ($_[0] =~ /<STDIN>/) {
+	if ($_[0] =~ /\$(.*)\s*\=\s*\<STDIN\>\;/) {
+		$_[0] =~ s/\$([^\s*]+)\s*\=\s*\<STDIN\>\;/$1 = float\(sys.stdin.readline\(\)\)/;
+		imports("sys");
+	}
+	elsif ($_[0] =~ /<STDIN>/) {
 		$_[0] =~ s/<STDIN>/sys.stdin.readline()/;
 		imports("sys");
 	}
 	return $_[0];
 }
+
+sub strings {
+	if ($_[0] =~ /\$([^\s*]+)\s*\.\s*\$(.*)/) {
+		$_[0] =~ s/\$([^\s*]+)\s*\.\s*\$(.*)/\$$1 + \$$2/;
+	}
+	if ($_[0] =~ /\$([^\s*]+)\s*\.=\s*\$(.*)/) {
+		$_[0] =~ s/\$([^\s*]+)\s*\.=\s*\$(.*)/\$$1 += \$$2/;
+	}
+	return $_[0];
+}	
 
 sub joins {
 	if ($_[0] =~ /join\s*\((.*)\,\s*(.*)\)/) {
@@ -115,21 +136,62 @@ sub joins {
 
 sub exits {
 	if ($_[0] =~ /exit [^\s]+[\s;]+/) {
-		$_[0] =~ s/exit (.*)[\s;]+/sys.exit($1)/;		#captures all words after exit right now
+		$_[0] =~ s/exit ([^\s*]+)([\s;]+)/sys.exit($1)$2/;		#captures all words after exit right now
 		imports("sys");
 	}
 	return $_[0];
 }
 
 sub regex {
-	if ($_[0] =~ /=~\s*s\/(.*)\/(.*)\/(.*);/) {
-		$_[0] =~ s/=~\s*s\/(.*)\/(.*)\/(.*);/= re.sub(r'$1', '$2', line)/;
+	if ($_[0] =~ /\$([^\s*]+)\s*=~\s*s\/(.*)\/(.*)\/(.*);/) {
+		$_[0] =~ s/\$([^\s*]+)\s*=~\s*s\/(.*)\/(.*)\/(.*);/$1 = re.sub(r'$2', '$3', $1)/;
+		imports("re");
+	}
+	elsif ($_[0] =~ /\$([^\s*]+)\s*=~\s*\/(.*)\/;/) {
+		$_[0] =~ s/\$([^\s*]+)\s*=~\s*\/(.*)\/;/$1 = re.match(r'$2', $1)/;
 		imports("re");
 	}
 	return $_[0];
 }
 
-sub forloops {
+sub arrayElements {
+	if ($_[0] =~ /push @(.*),\s*(.*);/) {
+		$_[0] =~ s/push @(.*),\s*(.*);/$1.append($2)/;
+	}
+	if ($_[0] =~ /pop @(.*);/) {
+		$_[0] =~ s/pop @(.*);/$1.pop()/;
+	}
+	if ($_[0] =~ /unshift @(.*),\s*(.*);/) {
+		$_[0] =~ s/unshift @(.*),\s*(.*);/$1.insert(0, $2)/;
+	}
+	if ($_[0] =~ /shift @(.*);/) {
+		$_[0] =~ s/shift @(.*);/$1.pop(0)/;
+	}
+	if ($_[0] =~ /reverse @(.*);/) {
+		$_[0] =~ s/reverse @(.*);/$1.reverse()/;
+	}
+	return $_[0];
+}
+
+sub arrays {
+	if ($_[0] =~ /@([^\s*]+)\s*=\s*\((.*)\);/) {
+		$_[0] =~ s/@([^\s*]+)\s*=\s*\((.*)\);/$1 = [$2]/;
+	}
+	if ($_[0] =~ /@(.*)/) {
+		$_[0] =~ s/@(.*)/$1/;
+	}
+	return $_[0];
+}
+
+sub hashTables {
+	if ($_[0] =~ /\$(.*)\{(.*)\}/) {
+		$_[0] =~ s/\$(.*)\{(.*)\}/$1\[$2\]/;
+		declarations("$1 = {}")
+	}
+	return $_[0];
+}
+
+sub forLoops {
 	if ($_[0] =~ /for\s*\((.*);\s*(.*);\s*(.*)\)\s*{$/) {
 		$_[0] =~ s/for\s*\((.*);\s*(.*);\s*(.*)\)\s*{$/for $1 in $2:/;		#TODO 
 	}
@@ -150,7 +212,7 @@ sub forloops {
 	return $_[0];					#need range number
 }
 
-sub ifelse {
+sub ifElse {
 	if ($_[0] =~ /}\s*elsif/) {
 		$_[0] =~ s/}\s*elsif/elif/;		
 	}
@@ -177,14 +239,20 @@ sub printing {   				# Python's print adds a new-line character by default so we
 		$_[0] =~ s/print\s*"\$ARGV\[(.*)\]\\n";$/print(sys.argv[$1 + 1])/;
 		imports("sys");
 	}
+	elsif ($_[0] =~ /^\s*print\s*"(\$.*)( .*)\\n"[\s;]*$/) {
+		$_[0] =~ s/^\s*print\s*"(\$.*)( .*)\\n"[\s;]*$/print("%s$2" % $1)/;
+	}
 	elsif ($_[0] =~ /^\s*print\s*"(\$.*)\\n"[\s;]*$/) {		#remove quotes when print variables
-		$_[0] =~ s/print\s*"(\$.*)\\n"[\s;]*$/print($1)/;
+		$_[0] =~ s/print\s*"(\$.*)\\n"([\s;])*$/print($1)$2/;
 	}
 	elsif ($_[0] =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {	#printing without variables
-		$_[0] =~ s/print\s*"(.*)\\n"[\s;]*$/print(\"$1\")/;			 
+		$_[0] =~ s/print\s*"(.*)\\n"([\s;])*$/print(\"$1\")$2/;
 	}
 	elsif ($_[0] =~ /^\s*print\s*(.*),\s*"\\n";*$/) {	#when printing without quotes
 		$_[0] =~ s/print\s*(.*),\s*"\\n";*$/print($1)/;
+	}
+	elsif ($_[0] =~ /^\s*print\s*"(.*)"/) {
+		$_[0] =~ s/^\s*print\s*"(.*)"/sys.stdout.write("$1")/;
 	}
 	return $_[0];
 }
@@ -192,6 +260,9 @@ sub printing {   				# Python's print adds a new-line character by default so we
 sub operator {
 	if ($_[0] =~ /\+\+/) {
 		$_[0] =~ s/\+\+/ \+= 1/g;
+	}
+	if ($_[0] =~ /\-\-/) {
+		$_[0] =~ s/\-\-/ \-= 1/g;
 	}
 	return $_[0];
 }
@@ -226,7 +297,7 @@ sub braces {	#replaces braces with colons
 	elsif ($_[0] =~ /\((.*)\)\s*{$/) {
 		$_[0] =~ s/\((.*)\)\s*{$/$1:/;	#replaces parentheses in conditionals #maybe replace for advanced 
 	} 
-	if 	($_[0] =~ /}\s*$/) {
+	if 	($_[0] =~ /\s*}\s*$/) {
 		$_[0] = 0;
 	}
 	return $_[0];
@@ -241,6 +312,19 @@ sub imports { #check if already imported
 	}
 	if ($temp == 0) {
 		push @imports, $_[0];
+	}
+	return;
+}
+
+sub declarations { #check if already declared
+	$temp = 0;
+	foreach $arg (@declare) {
+		if ($arg eq $_[0]) {
+			$temp = 1;
+		}
+	}
+	if ($temp == 0) {
+		push @declare, $_[0];
 	}
 	return;
 }
