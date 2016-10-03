@@ -1,2 +1,6 @@
 #!/usr/bin/perl -w
-# put your test script here
+
+@array =(1,2, 'test');
+
+print @array,"\n";
+

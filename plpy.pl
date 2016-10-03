@@ -96,9 +96,13 @@ sub stdin {
 #Translate input loops
 sub specialLoops {
 	if ($_[0] =~ /while\s*\((.*)\s*=\s*<>\)\s*{$/) {
-		$_[0] =~ s/while\s*\(([^\s*]+)\s*=\s*<>\)\s*{$/for $1 in fileinput.input\(\):/;	
+		$_[0] =~ s/while\s*\(([^\s*]+)\s*=\s*<>\)\s*{$/for $1 in fileinput.input\(\):/;
 		imports("fileinput");
 	}
+    elsif ($_[0] =~ /while\s*\(\s*<>\s*\)\s*{$/) {
+		$_[0] =~ s/while\s*\(\s*<>\s*\)\s*{$/for line in fileinput.input\(\):/;
+		imports("fileinput");
+    }
 	elsif ($_[0] =~ /while\s*\((.*)\s*=\s*<STDIN>\)\s*{$/) {
 		$_[0] =~ s/while\s*\(([^\s*]+)\s*=\s*<STDIN>\)\s*{$/for $1 in sys.stdin\(\):/;	
 		imports("sys");
@@ -205,6 +209,10 @@ sub hashTables {
 		$_[0] =~ s/\$(.*)\{(.*)\}/$1\[$2\]/;
 		declarations("$1 = {}")
 	}
+	elsif ($_[0] =~ /\%([^\s*]+)\s*=\s*\(\);$/) {
+		$_[0] = 0;
+		declarations("$1 = {}")
+	}
 	return $_[0];
 }
 
@@ -272,24 +280,24 @@ sub comments {
 
 #Translates print statements
 sub printing {
-	if ($_[0] =~ /print\s*"\$ARGV\[(.*)\]\\n";$/) {   #Translate $ARGV  
+	if ($_[0] =~ /\s*print\s*"\$ARGV\[(.*)\]\\n";$/) {   #Translate $ARGV  
 		$_[0] =~ s/print\s*"\$ARGV\[(.*)\]\\n";$/print(sys.argv[$1 + 1])/;
 		imports("sys");
 	}
-	elsif ($_[0] =~ /^\s*print\s*"(\$.*)( .*)\\n"[\s;]*$/) {   #When inserting variables into prints 
-		$_[0] =~ s/^\s*print\s*"(\$.*)( .*)\\n"[\s;]*$/print("%s$2" % $1)/;
+	elsif ($_[0] =~ /\s*print\s*"(\$.*)( .*)\\n"[\s;]*$/) {   #When inserting variables into prints 
+		$_[0] =~ s/print\s*"(\$.*)( .*)\\n"[\s;]*$/print("%s$2" % $1)/;
 	}
-	elsif ($_[0] =~ /^\s*print\s*"(\$.*)\\n"[\s;]*$/) {		#Remove quotes when printing variables
+	elsif ($_[0] =~ /\s*print\s*"(\$.*)\\n"[\s;]*$/) {		#Remove quotes when printing variables
 		$_[0] =~ s/print\s*"(\$.*)\\n"([\s;])*$/print($1)/;
 	}
-	elsif ($_[0] =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {	#Printing without variables
+	elsif ($_[0] =~ /\s*print\s*"(.*)\\n"[\s;]*$/) {	#Printing without variables
 		$_[0] =~ s/print\s*"(.*)\\n"([\s;])*$/print(\"$1\")/;
 	}
-	elsif ($_[0] =~ /^\s*print\s*(.*),\s*"\\n";*$/) {	#Printing without quotes
+	elsif ($_[0] =~ /\s*print\s*(.*),\s*"\\n";*$/) {	#Printing without quotes
 		$_[0] =~ s/print\s*(.*),\s*"\\n";*$/print($1)/;
 	}
-	elsif ($_[0] =~ /^\s*print\s*"(.*)"/) {   #Printing without newlines
-		$_[0] =~ s/^\s*print\s*"(.*)"/sys.stdout.write("$1")/;
+	elsif ($_[0] =~ /\s*print\s*"(.*)"/) {   #Printing without newlines
+		$_[0] =~ s/print\s*"(.*)"/sys.stdout.write("$1")/;
 		imports("sys");
 	}
 	return $_[0];

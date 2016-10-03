@@ -1,4 +1,15 @@
 #!/usr/bin/perl -w
-for ($count =0; $count < 4; $count++){
-	print "$count\n";
+
+$count = 0;
+@array=('password', 'temp', 'test');
+foreach $arg (@array) {
+    $temp = "password";
+    if ($arg eq "password") {
+        print "bad password\n";
+    }
+    else {
+        print $arg,"\n";
+    }
+    $count++;
 }
+print "$count\n";

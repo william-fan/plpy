@@ -1,2 +1,6 @@
 #!/usr/bin/perl -w
-# put your test script here
+
+$variable = 10/5;
+$variable++;
+print "$variable hello\n";
+#test

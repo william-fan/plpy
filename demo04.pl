@@ -1,2 +1,8 @@
 #!/usr/bin/perl -w
-# put your demo script here
+
+@array=();
+while ($a = <>) {
+    unshift @array, $a;
+}
+print reverse @array;
+print @array;
