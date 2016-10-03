@@ -21,7 +21,7 @@ while ($line = <F>) {
 	$line = specialLoops($line);
 	$line = arguments($line);
 	$line = strings($line);
-	$line = joins($line);
+	$line = joinSplit($line);
 	$line = exits($line);
 	$line = regex($line);
 	$line = arrayElements($line);
@@ -36,7 +36,6 @@ while ($line = <F>) {
 	$line = skips($line);
 	$line = semicolons($line);
 	$line = braces($line);
-	#$line = unknown($line);
 	if ($line ne 0) {	 #delete line if zero
 		push @final, $line;
 	}
@@ -73,8 +72,8 @@ sub header {	# translate #! line
 }
 
 sub strip {
-	if ($_[0] =~ /chomp (.*);/) {
-		$_[0] =~ s/chomp (.*);/$1 = $1.rstrip()/;
+	if ($_[0] =~ /chomp\s*([^\s;]+);*/) {
+		$_[0] =~ s/chomp\s*([^\s;]+);*/$1 = $1.rstrip()/;
 	}
 	return $_[0];
 
@@ -95,14 +94,14 @@ sub specialLoops {
 	}
 	elsif ($_[0] =~ /while\s*\((.*)\s*=\s*<STDIN>\)\s*{$/) {
 		$_[0] =~ s/while\s*\(([^\s*]+)\s*=\s*<STDIN>\)\s*{$/for $1 in sys.stdin\(\):/;	
-		imports("fileinput");
+		imports("sys");
 	}
 	return $_[0];
 }
 
 sub arguments {
 	if ($_[0] =~ /\$(.*)\s*\=\s*\<STDIN\>\;/) {
-		$_[0] =~ s/\$([^\s*]+)\s*\=\s*\<STDIN\>\;/$1 = float\(sys.stdin.readline\(\)\)/;
+		$_[0] =~ s/\$([^\s*]+)\s*\=\s*\<STDIN\>\;/$1 = sys.stdin.readline\(\)/;
 		imports("sys");
 	}
 	elsif ($_[0] =~ /<STDIN>/) {
@@ -122,53 +121,55 @@ sub strings {
 	return $_[0];
 }	
 
-sub joins {
-	if ($_[0] =~ /join\s*\((.*)\,\s*(.*)\)/) {
-		$_[0] =~ s/join\s*\((.*)\,\s*(.*)\)/$1.join\($2\)/;
-		imports("sys");
+sub joinSplit {
+	if ($_[0] =~ /join\s*\((.*)\,\s*(.*)\);*/) {
+		$_[0] =~ s/join\s*\((.*)\,\s*(.*)\);*/$1.join\($2\)/;
 	}
-	elsif ($_[0] =~ /join\s*(.*)\,\s*(.*)[;\s*]/) {
-		$_[0] =~ s/join\s*(.*)\,\s*(.*)[;\s*]/$1.join\($2\)/;
-		imports("sys");
+	elsif ($_[0] =~ /join\s*(.*)\,\s*(.*)[;\s*];*/) {
+		$_[0] =~ s/join\s*(.*)\,\s*(.*)[;\s*];*/$1.join\($2\)/;
+	}
+	if ($_[0] =~ /split\s*\(\/(.*)\/\,\s*\$(.*)\);*/) {
+		$_[0] =~ s/split\s*\(\/(.*)\/\,\s*\$(.*)\);*/re\.split\(r'$1', $2\)/;
+		imports("re");
 	}
 	return $_[0];
 }
 
 sub exits {
 	if ($_[0] =~ /exit [^\s]+[\s;]+/) {
-		$_[0] =~ s/exit ([^\s*]+)([\s;]+)/sys.exit($1)$2/;		#captures all words after exit right now
+		$_[0] =~ s/exit ([^\s*]+)([\s;]+)/sys.exit($1)/;		#captures all words after exit right now
 		imports("sys");
 	}
 	return $_[0];
 }
 
 sub regex {
-	if ($_[0] =~ /\$([^\s*]+)\s*=~\s*s\/(.*)\/(.*)\/(.*);/) {
-		$_[0] =~ s/\$([^\s*]+)\s*=~\s*s\/(.*)\/(.*)\/(.*);/$1 = re.sub(r'$2', '$3', $1)/;
+	if ($_[0] =~ /\$([^\s*]+)\s*=~\s*s\/(.*)\/(.*)\/(.*);*/) {
+		$_[0] =~ s/\$([^\s*]+)\s*=~\s*s\/(.*)\/(.*)\/(.*);*/$1 = re.sub(r'$2', '$3', $1)/;
 		imports("re");
 	}
-	elsif ($_[0] =~ /\$([^\s*]+)\s*=~\s*\/(.*)\/;/) {
-		$_[0] =~ s/\$([^\s*]+)\s*=~\s*\/(.*)\/;/$1 = re.match(r'$2', $1)/;
+	elsif ($_[0] =~ /\$([^\s*]+)\s*=~\s*\/(.*)\/;*/) {
+		$_[0] =~ s/\$([^\s*]+)\s*=~\s*\/(.*)\/;*/$1 = re.match(r'$2', $1)/;
 		imports("re");
 	}
 	return $_[0];
 }
 
 sub arrayElements {
-	if ($_[0] =~ /push @(.*),\s*(.*);/) {
-		$_[0] =~ s/push @(.*),\s*(.*);/$1.append($2)/;
+	if ($_[0] =~ /push\s*@(.*),\s*([^\s;]+)/) {
+		$_[0] =~ s/push\s*@(.*),\s*([^\s;]+)/$1.append($2)/;
 	}
-	if ($_[0] =~ /pop @(.*);/) {
-		$_[0] =~ s/pop @(.*);/$1.pop()/;
+	if ($_[0] =~ /pop\s*@([^\s;]+)/) {
+		$_[0] =~ s/pop\s*@([^\s;]+)/$1.pop()/;
 	}
-	if ($_[0] =~ /unshift @(.*),\s*(.*);/) {
-		$_[0] =~ s/unshift @(.*),\s*(.*);/$1.insert(0, $2)/;
+	if ($_[0] =~ /unshift\s*@(.*),\s*([^\s;]+);*/) {
+		$_[0] =~ s/unshift\s*@(.*),\s*([^\s;]+);*/$1.insert(0, $2)/;
 	}
-	if ($_[0] =~ /shift @(.*);/) {
-		$_[0] =~ s/shift @(.*);/$1.pop(0)/;
+	if ($_[0] =~ /shift\s*@([^\s;]+);*/) {
+		$_[0] =~ s/shift\s+@([^\s;]+);*/$1.pop(0)/;
 	}
-	if ($_[0] =~ /reverse @(.*);/) {
-		$_[0] =~ s/reverse @(.*);/$1.reverse()/;
+	if ($_[0] =~ /reverse\s*@([^\s;]+);*/) {
+		$_[0] =~ s/reverse\s*@([^\s;]+);*/$1.reverse()/;
 	}
 	return $_[0];
 }
@@ -243,16 +244,17 @@ sub printing {   				# Python's print adds a new-line character by default so we
 		$_[0] =~ s/^\s*print\s*"(\$.*)( .*)\\n"[\s;]*$/print("%s$2" % $1)/;
 	}
 	elsif ($_[0] =~ /^\s*print\s*"(\$.*)\\n"[\s;]*$/) {		#remove quotes when print variables
-		$_[0] =~ s/print\s*"(\$.*)\\n"([\s;])*$/print($1)$2/;
+		$_[0] =~ s/print\s*"(\$.*)\\n"([\s;])*$/print($1)/;
 	}
 	elsif ($_[0] =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {	#printing without variables
-		$_[0] =~ s/print\s*"(.*)\\n"([\s;])*$/print(\"$1\")$2/;
+		$_[0] =~ s/print\s*"(.*)\\n"([\s;])*$/print(\"$1\")/;
 	}
 	elsif ($_[0] =~ /^\s*print\s*(.*),\s*"\\n";*$/) {	#when printing without quotes
 		$_[0] =~ s/print\s*(.*),\s*"\\n";*$/print($1)/;
 	}
 	elsif ($_[0] =~ /^\s*print\s*"(.*)"/) {
 		$_[0] =~ s/^\s*print\s*"(.*)"/sys.stdout.write("$1")/;
+		imports("sys");
 	}
 	return $_[0];
 }
@@ -327,8 +329,4 @@ sub declarations { #check if already declared
 		push @declare, $_[0];
 	}
 	return;
-}
-
-sub unknown {	# Lines we can't translate are turned into comments
-	return $_[0];
 }

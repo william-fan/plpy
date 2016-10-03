@@ -1,11 +1,15 @@
 #!/usr/bin/perl -w
 
-foreach $thing (@list) {
-	$string .= $separator . $thing;
+$number = 0;
+while ($number >= 0) {
+    print "Enter number:\n";
+    $number = <STDIN>;
+    if ($number >= 0) {
+        if ($number % 2 == 0) {
+            print "Even\n";
+        } else {
+            print "Odd\n";
+        }
+    }
 }
-return $string;
-$course =~ s/\|.*//;
-$count{$course} = $1;
-$count{$course} = $1;
-$count{$course} = $1;
-$ffff{} = dlkskd;
+print "Bye\n";
